@@ -1,51 +1,62 @@
+import readchar
+
+class ParseException(Exception):
+    def __init__(self, index, character):
+        super(ParseException, self).__init__(
+            'Error during code parsing at character {}'.format(index)
+        )
+        self.error_index = index
+        self.error_character = character
 
 class BFEvaluator(object):
-  def __init__(self):
-    super(BFEvaluator, self).__init__()
-    self.memory = bytearray([0 for i in range(1024)])
-    self.pc = 0
-    self.jmp_map = {}
+    def __init__(self):
+        super(BFEvaluator, self).__init__()
 
-  def _pre_evaluate(self, program):
-    jmp = []
-    for idx, tok in enumerate(program):
-      if tok == "[":
-        jmp.append(idx)
-      elif tok == "]":
-        if len(jmp) == 0:
-          return False
+    def _create_jump_map(self, program):
+        jumps = []
+        jump_map = {}
 
-        start = jmp.pop()
-        self.jmp_map[start] = idx
-        self.jmp_map[idx] = start        
+        for index, token in enumerate(program):
+            if token == "[":
+                jumps.append(index)
+            elif token == "]":
+                if len(jumps) == 0:
+                    raise ParseException(index, token)
 
-    return len(jmp) == 0
+                start = jumps.pop()
+                jump_map[start] = index
+                jump_map[index] = start
 
-  def evaluate(self, program):
-    if not self._pre_evaluate(program):
-      print "There was an interpreter error"
-      return False
+        if len(jumps) != 0:
+            raise ParseException(len(program), '')
 
-    idx = 0
-    while idx < len(program):
-      tok = program[idx]
-      if tok == ">":
-        self.pc = self.pc + 1
-      elif tok == "<":
-        self.pc = self.pc - 1
-      elif tok == "+":
-        self.memory[self.pc] += 1
-      elif tok == "-":
-        self.memory[self.pc] -= 1
-      elif tok == ".":
-        print chr(self.memory[self.pc]),
-      elif tok == ",":
-        self.memory[self.pc] = ord(readchar.readchar())
-      elif tok == "[":
-        if self.memory[self.pc] == 0:
-          idx = self.jmp_map[idx]
-      elif tok == "]":
-        if self.memory[self.pc] != 0:
-          idx = self.jmp_map[idx]
+        return jump_map
 
-      idx = idx + 1
+    def evaluate(self, program):
+        jump_map = self._create_jump_map(program)
+
+        index = 0
+        program_counter = 0
+        memory = bytearray([0 for i in range(1024)])
+        while index < len(program):
+            token = program[index]
+            if token == ">":
+                program_counter = program_counter + 1
+            elif token == "<":
+                program_counter = program_counter - 1
+            elif token == "+":
+                memory[program_counter] += 1
+            elif token == "-":
+                memory[program_counter] -= 1
+            elif token == ".":
+                print chr(memory[program_counter]),
+            elif token == ",":
+                memory[program_counter] = ord(readchar.readchar())
+            elif token == "[":
+                if memory[program_counter] == 0:
+                    index = jump_map[index]
+            elif token == "]":
+                if memory[program_counter] != 0:
+                    index = jump_map[index]
+
+            index = index + 1
