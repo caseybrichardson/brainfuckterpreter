@@ -57,9 +57,9 @@ class BFEvaluator(object):
             elif token == "<":
                 program_counter = program_counter - 1
             elif token == "+":
-                memory[program_counter] += 1
+                memory[program_counter] = (memory[program_counter] + 1) % 256
             elif token == "-":
-                memory[program_counter] -= 1
+                memory[program_counter] = (memory[program_counter] - 1) % 256
             elif token == ".":
                 print chr(memory[program_counter]),
             elif token == ",":
