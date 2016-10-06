@@ -1,4 +1,6 @@
 
+import io
+
 try:
     import readchar
 except ImportError:
@@ -13,6 +15,20 @@ class ParseException(Exception):
         )
         self.error_index = index
         self.error_character = character
+
+class BFEvaluationResult(object):
+    def __init__(self, source, memory, output):
+        super(BFEvaluationResult, self).__init__()
+        self.source = source
+        self.memory = memory
+        self.output = output
+
+    def __repr__(self):
+        return 'BFEvaluationResult<Source: "{}", Mem: {}, Output: "{}">'.format(
+            self.source[:8],
+            len(self.memory),
+            self.output.replace('\n', ' ').strip()
+        )
 
 class BFEvaluator(object):
     def __init__(self, memory_size=1024, interactive=True):
@@ -50,6 +66,8 @@ class BFEvaluator(object):
         index = 0
         program_counter = 0
         memory = bytearray([0 for i in range(self.memory_size)])
+        output = io.StringIO()
+
         while index < len(program):
             token = program[index]
             if token == ">":
@@ -61,7 +79,7 @@ class BFEvaluator(object):
             elif token == "-":
                 memory[program_counter] = (memory[program_counter] - 1) % 256
             elif token == ".":
-                print chr(memory[program_counter]),
+                output.write(unicode(chr(memory[program_counter])))
             elif token == ",":
                 if self.interactive:
                     memory[program_counter] = ord(readchar.readchar())
@@ -79,3 +97,6 @@ class BFEvaluator(object):
                     index = jump_map[index]
 
             index = index + 1
+
+        content = output.getvalue()
+        return BFEvaluationResult(program, memory, content)
