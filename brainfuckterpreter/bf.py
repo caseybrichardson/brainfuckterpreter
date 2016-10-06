@@ -9,8 +9,9 @@ class ParseException(Exception):
         self.error_character = character
 
 class BFEvaluator(object):
-    def __init__(self):
+    def __init__(self, memory_size=1024):
         super(BFEvaluator, self).__init__()
+        self.memory_size = memory_size
 
     def _create_jump_map(self, program):
         jumps = []
@@ -37,7 +38,7 @@ class BFEvaluator(object):
 
         index = 0
         program_counter = 0
-        memory = bytearray([0 for i in range(1024)])
+        memory = bytearray([0 for i in range(self.memory_size)])
         while index < len(program):
             token = program[index]
             if token == ">":
