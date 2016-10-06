@@ -1,4 +1,10 @@
-import readchar
+
+try:
+    import readchar
+except ImportError:
+    INTERACTIVE_AVAILABLE = False
+else:
+    INTERACTIVE_AVAILABLE = True
 
 class ParseException(Exception):
     def __init__(self, index, character):
@@ -9,9 +15,14 @@ class ParseException(Exception):
         self.error_character = character
 
 class BFEvaluator(object):
-    def __init__(self, memory_size=1024):
+    def __init__(self, memory_size=1024, interactive=True):
         super(BFEvaluator, self).__init__()
         self.memory_size = memory_size
+        self._interactive = interactive and INTERACTIVE_AVAILABLE
+
+    @property
+    def interactive(self):
+        return self._interactive
 
     def _create_jump_map(self, program):
         jumps = []
@@ -33,7 +44,7 @@ class BFEvaluator(object):
 
         return jump_map
 
-    def evaluate(self, program):
+    def evaluate(self, program, input_string=None):
         jump_map = self._create_jump_map(program)
 
         index = 0
@@ -52,7 +63,14 @@ class BFEvaluator(object):
             elif token == ".":
                 print chr(memory[program_counter]),
             elif token == ",":
-                memory[program_counter] = ord(readchar.readchar())
+                if self.interactive:
+                    memory[program_counter] = ord(readchar.readchar())
+                elif input_string is not None:
+                    if len(input_string) != 0:
+                        memory[program_counter] = ord(input_string[0])
+                        input_string = input_string[1:]
+                    else:
+                        memory[program_counter] = 0
             elif token == "[":
                 if memory[program_counter] == 0:
                     index = jump_map[index]
